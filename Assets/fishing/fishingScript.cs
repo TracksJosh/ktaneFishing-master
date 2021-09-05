@@ -152,7 +152,7 @@ public class fishingScript : MonoBehaviour {
         yield return new WaitForSecondsRealtime(5.0f);
         int arrayFish = UnityEngine.Random.Range(0, Fish.Length);
         Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
-        if (FishTotal >= Bomb.GetSolvableModuleNames().Count())
+        if (FishTotal >= Bomb.GetSolvableModuleNames().Count()*2)
         {
             Fishies.sprite = Fish[FishGoal];
             arrayFish = FishGoal;
