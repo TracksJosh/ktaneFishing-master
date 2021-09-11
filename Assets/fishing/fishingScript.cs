@@ -1,10 +1,8 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using KModkit;
-using System.Security.Cryptography;
-using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 public class fishingScript : MonoBehaviour {
 
@@ -21,10 +19,8 @@ public class fishingScript : MonoBehaviour {
     public Sprite[] Fish;
     public SpriteRenderer Fishies;
 
-    string Indicators;
     int ParallelPort, PS2Port, Vowels, Consonants, Evens, Odds, FishGoal, FishTotal, TrashTotal;
 
-    private bool isActive;
     private bool isSolved;
     private static int moduleIdCounter = 1;
     private int moduleId;
@@ -41,8 +37,8 @@ public class fishingScript : MonoBehaviour {
         FishTotal = 0;
         TrashTotal = 0;
         moduleId = moduleIdCounter++;
-        bombModule.OnActivate += Activate;
-        Reel.OnInteract += delegate { ReelFish(); return false; };
+        Reel.OnInteract += delegate { if (showReel) ReelFish(); return false; };
+        Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
         GetSolveFish();
     }
 
@@ -123,20 +119,16 @@ public class fishingScript : MonoBehaviour {
         {
             FishGoal += 4;
         }
-        if (Vowels == 6-Consonants-Evens-Odds)
+        if (Consonants == 0 && Vowels != 0)
         {
             FishGoal += 2;
         }
-        if (Evens == 6-Odds-Consonants-Vowels)
+        if (Odds == 0 && Evens != 0)
         {
             FishGoal += 1;
         }
         FishGoal = FishGoal + 46;
-        Debug.LogFormat("[Fishing #{0}] Fish Need to Catch: {1}", moduleId, Fish[FishGoal]);
-    }
-    private void Activate()
-    {
-        isActive = true;
+        Debug.LogFormat("[Fishing #{0}] Calculated Fish: {1}", moduleId, Fish[FishGoal].name);
     }
 
     void ReelFish()
@@ -150,17 +142,8 @@ public class fishingScript : MonoBehaviour {
     {
         audio.PlaySoundAtTransform("Fishing_rod_cast", transform);
         yield return new WaitForSecondsRealtime(5.0f);
-        int arrayFish = UnityEngine.Random.Range(0, Fish.Length);
-        Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
-        if (FishTotal >= Bomb.GetSolvableModuleNames().Count()*2)
-        {
-            Fishies.sprite = Fish[FishGoal];
-            arrayFish = FishGoal;
-        }
-        else
-        {
-            Fishies.sprite = Fish[arrayFish];
-        }
+        int arrayFish = Random.Range(0, Fish.Length);
+        Fishies.sprite = Fish[arrayFish];
         showFish = true;
         showRod = false;
         yield return new WaitForSecondsRealtime(2.0f);
@@ -173,10 +156,12 @@ public class fishingScript : MonoBehaviour {
         {
             FishTotal++;
         }
-        Debug.LogFormat("[Fishing #{0}] Caught: {1}", moduleId, Fish[arrayFish]);
-        if (FishGoal == arrayFish)
+        Debug.LogFormat("[Fishing #{0}] Caught: {1}", moduleId, Fish[arrayFish].name);
+        if (FishGoal == arrayFish || FishTotal >= ((Bomb.GetSolvableModuleNames().Count() * 2) + 1))
         {
+            Debug.LogFormat("[Fishing #{0}] Module Solved", moduleId);
             bombModule.HandlePass();
+            isSolved = true;
             showFish = false;
         }
         else
@@ -185,6 +170,35 @@ public class fishingScript : MonoBehaviour {
             showReel = true;
             showHook = true;
             showFish = false;
+        }
+    }
+
+    //twitch plays
+    #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button]";
+    #pragma warning restore 414
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        if (Regex.IsMatch(command, @"^\s*reel\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            if (!showReel)
+            {
+                yield return "sendtochaterror The reel button cannot be pressed right now!";
+                yield break;
+            }
+            Reel.OnInteract();
+            yield return "solve";
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        while (true)
+        {
+            if (showReel)
+                Reel.OnInteract();
+            while (!showReel) { if (isSolved) yield break; yield return true; }
         }
     }
 }
