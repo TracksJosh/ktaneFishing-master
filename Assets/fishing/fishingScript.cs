@@ -13,31 +13,38 @@ public class fishingScript : MonoBehaviour {
     public GameObject Hook;
     public GameObject Line;
     public GameObject Sprites;
+    public GameObject KeepThrow;
     public TextMesh FishCaught;
     public TextMesh TrashCollected;
     public KMSelectable Reel;
+    public KMSelectable Keep;
+    public KMSelectable Throw;
     public Sprite[] Fish;
     public SpriteRenderer Fishies;
 
-    int ParallelPort, PS2Port, Vowels, Consonants, Evens, Odds, FishGoal, FishTotal, TrashTotal;
+    int ParallelPort, PS2Port, Vowels, Consonants, Evens, Odds, FishGoal, FishTotal, TrashTotal, arrayFish;
 
     private bool isSolved;
     private static int moduleIdCounter = 1;
     private int moduleId;
 
-    private bool showFish, showHook, showReel, showRod;
+    private bool showFish, showHook, showReel, showRod, castThrow;
 
     // Use this for initialization
     void Start () {
         isSolved = false;
         showFish = false;
+        castThrow = false;
         showHook = true;
         showReel = true;
         showRod = true;
         FishTotal = 0;
+        arrayFish = 0;
         TrashTotal = 0;
         moduleId = moduleIdCounter++;
         Reel.OnInteract += delegate { if (showReel) ReelFish(); return false; };
+        Keep.OnInteract += delegate { if (castThrow) KeepFish(); return false; };
+        Throw.OnInteract += delegate { if (castThrow) ThrowFish(); return false; };
         Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
         GetSolveFish();
     }
@@ -55,6 +62,14 @@ public class fishingScript : MonoBehaviour {
         else
         {
             Sprites.gameObject.SetActive(true);
+        }
+        if (!castThrow)
+        {
+            KeepThrow.gameObject.SetActive(false);
+        }
+        else
+        {
+            KeepThrow.gameObject.SetActive(true);
         }
         if (!showHook)
         {
@@ -138,17 +153,10 @@ public class fishingScript : MonoBehaviour {
         StartCoroutine(Fishing());
     }
 
-    IEnumerator Fishing()
+    void KeepFish()
     {
-        audio.PlaySoundAtTransform("Fishing_rod_cast", transform);
-        yield return new WaitForSecondsRealtime(5.0f);
-        int arrayFish = Random.Range(0, Fish.Length);
-        Fishies.sprite = Fish[arrayFish];
-        showFish = true;
-        showRod = false;
-        yield return new WaitForSecondsRealtime(2.0f);
         audio.PlaySoundAtTransform("Fishing_rod_reel_in2", transform);
-        if((arrayFish >= 18 && arrayFish <=45)||(arrayFish >=92 && arrayFish <= 99))
+        if ((arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99))
         {
             TrashTotal++;
         }
@@ -156,8 +164,7 @@ public class fishingScript : MonoBehaviour {
         {
             FishTotal++;
         }
-        Debug.LogFormat("[Fishing #{0}] Caught: {1}", moduleId, Fish[arrayFish].name);
-        if (FishGoal == arrayFish || FishTotal >= ((Bomb.GetSolvableModuleNames().Count() * 2) + 1))
+        if (FishGoal == arrayFish || FishTotal >= Bomb.GetSolvableModuleNames().Count())
         {
             Debug.LogFormat("[Fishing #{0}] Module Solved", moduleId);
             bombModule.HandlePass();
@@ -170,12 +177,36 @@ public class fishingScript : MonoBehaviour {
             showReel = true;
             showHook = true;
             showFish = false;
+            castThrow = false;
         }
+    }
+
+    void ThrowFish()
+    {
+        audio.PlaySoundAtTransform("Fishing_rod_reel_in2", transform);
+        showRod = true;
+        showReel = true;
+        showHook = true;
+        showFish = false;
+        castThrow = false;
+    }
+
+    IEnumerator Fishing()
+    {
+        audio.PlaySoundAtTransform("Fishing_rod_cast", transform);
+        yield return new WaitForSecondsRealtime(2.0f);
+        arrayFish = Random.Range(0, Fish.Length);
+        Fishies.sprite = Fish[arrayFish];
+        showFish = true;
+        showRod = false;
+        yield return new WaitForSecondsRealtime(1.0f);
+        Debug.LogFormat("[Fishing #{0}] Caught: {1}", moduleId, Fish[arrayFish].name);
+        castThrow = true;
     }
 
     //twitch plays
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button]";
+    private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button] keep [Presses the keep button] throw [Presses the throw button]";
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
@@ -190,6 +221,28 @@ public class fishingScript : MonoBehaviour {
             Reel.OnInteract();
             yield return "solve";
         }
+        if (Regex.IsMatch(command, @"^\s*keep\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            if (!castThrow)
+            {
+                yield return "sendtochaterror The keep button cannot be pressed right now!";
+                yield break;
+            }
+            Keep.OnInteract();
+            yield return "solve";
+        }
+        if (Regex.IsMatch(command, @"^\s*throw\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            if (!castThrow)
+            {
+                yield return "sendtochaterror The throw button cannot be pressed right now!";
+                yield break;
+            }
+            Keep.OnInteract();
+            yield return "solve";
+        }
     }
 
     IEnumerator TwitchHandleForcedSolve()
@@ -198,7 +251,7 @@ public class fishingScript : MonoBehaviour {
         {
             if (showReel)
                 Reel.OnInteract();
-            while (!showReel) { if (isSolved) yield break; yield return true; }
+            while (!showReel) { if (isSolved) yield break; if (castThrow) Keep.OnInteract(); yield return true; }
         }
     }
 }
