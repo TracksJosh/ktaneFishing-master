@@ -156,6 +156,7 @@ public class fishingScript : MonoBehaviour {
     void KeepFish()
     {
         audio.PlaySoundAtTransform("Fishing_rod_reel_in2", transform);
+        Debug.LogFormat("[Fishing #{0}] Catch Kept", moduleId);
         if ((arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99))
         {
             TrashTotal++;
@@ -177,13 +178,14 @@ public class fishingScript : MonoBehaviour {
             showReel = true;
             showHook = true;
             showFish = false;
-            castThrow = false;
         }
+        castThrow = false;
     }
 
     void ThrowFish()
     {
         audio.PlaySoundAtTransform("Fishing_rod_reel_in2", transform);
+        Debug.LogFormat("[Fishing #{0}] Catch Thrown", moduleId);
         showRod = true;
         showReel = true;
         showHook = true;
@@ -206,7 +208,7 @@ public class fishingScript : MonoBehaviour {
 
     //twitch plays
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button] keep [Presses the keep button] throw [Presses the throw button]";
+    private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button] | !{0} keep [Presses the keep button] | !{0} throw [Presses the throw button]";
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
@@ -219,7 +221,6 @@ public class fishingScript : MonoBehaviour {
                 yield break;
             }
             Reel.OnInteract();
-            yield return "solve";
         }
         if (Regex.IsMatch(command, @"^\s*keep\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
@@ -230,7 +231,6 @@ public class fishingScript : MonoBehaviour {
                 yield break;
             }
             Keep.OnInteract();
-            yield return "solve";
         }
         if (Regex.IsMatch(command, @"^\s*throw\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
@@ -240,8 +240,7 @@ public class fishingScript : MonoBehaviour {
                 yield return "sendtochaterror The throw button cannot be pressed right now!";
                 yield break;
             }
-            Keep.OnInteract();
-            yield return "solve";
+            Throw.OnInteract();
         }
     }
 
@@ -251,7 +250,11 @@ public class fishingScript : MonoBehaviour {
         {
             if (showReel)
                 Reel.OnInteract();
-            while (!showReel) { if (isSolved) yield break; if (castThrow) Keep.OnInteract(); yield return true; }
+            while (!castThrow) { yield return true; }
+            Keep.OnInteract();
+            yield return new WaitForSeconds(0.1f);
+            if (isSolved)
+                break;
         }
     }
 }
