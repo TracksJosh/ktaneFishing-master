@@ -27,6 +27,7 @@ public class fishingScript : MonoBehaviour {
     private bool isSolved;
     private static int moduleIdCounter = 1;
     private int moduleId;
+    private double tpscore = 0;
 
     private bool showFish, showHook, showReel, showRod, castThrow;
 
@@ -230,7 +231,15 @@ public class fishingScript : MonoBehaviour {
                 yield return "sendtochaterror The keep button cannot be pressed right now!";
                 yield break;
             }
+            else
+            {
+                tpscore += 0.2;
+            }
             Keep.OnInteract();
+            if (isSolved)
+            {
+                yield return "awardpoints " + tpscore;
+            }
         }
         if (Regex.IsMatch(command, @"^\s*throw\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
