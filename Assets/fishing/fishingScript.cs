@@ -3,6 +3,7 @@ using UnityEngine;
 using KModkit;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System;
 
 public class fishingScript : MonoBehaviour {
 
@@ -198,7 +199,7 @@ public class fishingScript : MonoBehaviour {
     {
         audio.PlaySoundAtTransform("Fishing_rod_cast", transform);
         yield return new WaitForSecondsRealtime(2.0f);
-        arrayFish = Random.Range(0, Fish.Length);
+        arrayFish = UnityEngine.Random.Range(0, Fish.Length);
         Fishies.sprite = Fish[arrayFish];
         showFish = true;
         showRod = false;
@@ -231,14 +232,14 @@ public class fishingScript : MonoBehaviour {
                 yield return "sendtochaterror The keep button cannot be pressed right now!";
                 yield break;
             }
-            else
+            else if (!(arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99))
             {
                 tpscore += 0.2;
             }
             Keep.OnInteract();
-            if (isSolved)
+            if (isSolved && tpscore >= 1f)
             {
-                yield return "awardpoints " + tpscore;
+                yield return "awardpoints " + (int)Math.Floor(tpscore);
             }
         }
         if (Regex.IsMatch(command, @"^\s*throw\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
