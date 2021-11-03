@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System;
 
-public class fishingScript : MonoBehaviour {
+public class fishingScript : MonoBehaviour
+{
 
     public KMBombInfo Bomb;
     public KMBombModule bombModule;
@@ -33,7 +34,8 @@ public class fishingScript : MonoBehaviour {
     private bool showFish, showHook, showReel, showRod, castThrow;
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
         isSolved = false;
         showFish = false;
         castThrow = false;
@@ -51,13 +53,14 @@ public class fishingScript : MonoBehaviour {
         GetSolveFish();
     }
 
-    
+
     // Update is called once per frame
-    void Update () {
+    void Update()
+    {
         FishCaught.text = "Fish: " + FishTotal;
         TrashCollected.text = "Trash: " + TrashTotal;
 
-		if(!showFish)
+        if (!showFish)
         {
             Sprites.gameObject.SetActive(false);
         }
@@ -209,9 +212,9 @@ public class fishingScript : MonoBehaviour {
     }
 
     //twitch plays
-    #pragma warning disable 414
+#pragma warning disable 414
     private readonly string TwitchHelpMessage = @"!{0} reel [Presses the reel button] | !{0} keep [Presses the keep button] | !{0} throw [Presses the throw button]";
-    #pragma warning restore 414
+#pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
         if (Regex.IsMatch(command, @"^\s*reel\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
