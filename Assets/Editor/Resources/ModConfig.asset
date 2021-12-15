@@ -20,7 +20,10 @@ MonoBehaviour:
     Id: fishing
 
 
-    Manual: ktane.timwi.de/HTML/Fishing.html'
-  version: 1.322
+    Manual: ktane.timwi.de/HTML/Fishing.html
+
+
+    Don''t venture off in the Letter Sea'
+  version: 2.01
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 0b3e2bfc5f5c8ff42b3db82a24e440a0, type: 3}

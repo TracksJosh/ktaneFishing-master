@@ -23,21 +23,27 @@ public class fishingScript : MonoBehaviour
     public KMSelectable Throw;
     public Sprite[] Fish;
     public SpriteRenderer Fishies;
+    public Renderer Background;
+    public KMSelectable ModuleSelectable;
+    public Material redWater;
+
+    private KeyCode space = KeyCode.C;
 
     int ParallelPort, PS2Port, Vowels, Consonants, Evens, Odds, FishGoal, FishTotal, TrashTotal, arrayFish;
 
-    private bool isSolved;
+    private bool isSolved, focused;
     private static int moduleIdCounter = 1;
     private int moduleId;
     private double tpscore = 0;
 
-    private bool showFish, showHook, showReel, showRod, castThrow;
+    private bool showFish, showHook, showReel, showRod, castThrow, overfishing;
 
     // Use this for initialization
     void Start()
     {
         isSolved = false;
         showFish = false;
+        overfishing = false;
         castThrow = false;
         showHook = true;
         showReel = true;
@@ -49,6 +55,12 @@ public class fishingScript : MonoBehaviour
         Reel.OnInteract += delegate { if (showReel) ReelFish(); return false; };
         Keep.OnInteract += delegate { if (castThrow) KeepFish(); return false; };
         Throw.OnInteract += delegate { if (castThrow) ThrowFish(); return false; };
+
+        if (Application.isEditor)
+            focused = true;
+        ModuleSelectable.OnFocus += delegate () { focused = true; };
+        ModuleSelectable.OnDefocus += delegate () { focused = false; };
+
         Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
         GetSolveFish();
     }
@@ -57,6 +69,11 @@ public class fishingScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        if (Input.GetKeyDown(space))
+        {
+            HandleOverfishing();
+        }
         FishCaught.text = "Fish: " + FishTotal;
         TrashCollected.text = "Trash: " + TrashTotal;
 
@@ -165,12 +182,23 @@ public class fishingScript : MonoBehaviour
         if ((arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99))
         {
             TrashTotal++;
+            if (overfishing)
+            {
+                FishTotal = 0;
+            }
         }
         else
         {
             FishTotal++;
         }
-        if (FishGoal == arrayFish || FishTotal >= Bomb.GetSolvableModuleNames().Count())
+        if ((FishGoal == arrayFish || FishTotal >= Bomb.GetSolvableModuleNames().Count()) && !overfishing)
+        {
+            Debug.LogFormat("[Fishing #{0}] Module Solved", moduleId);
+            bombModule.HandlePass();
+            isSolved = true;
+            showFish = false;
+        }
+        else if (FishGoal == arrayFish && overfishing)
         {
             Debug.LogFormat("[Fishing #{0}] Module Solved", moduleId);
             bombModule.HandlePass();
@@ -196,6 +224,21 @@ public class fishingScript : MonoBehaviour
         showHook = true;
         showFish = false;
         castThrow = false;
+        if (overfishing && !((arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99)))
+        {
+            FishTotal = 0;
+        }
+    }
+
+    void HandleOverfishing()
+    {
+        if (focused && !overfishing)
+        {
+            overfishing = true;
+            audio.PlaySoundAtTransform("brain bell", transform);
+            FishGoal = 999999;
+            Background.material = redWater;
+        }
     }
 
     IEnumerator Fishing()
