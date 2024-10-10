@@ -63,6 +63,15 @@ public class fishingScript : MonoBehaviour
 
         Debug.LogFormat("[Fishing #{0}] Module Count: {1}", moduleId, Bomb.GetSolvableModuleNames().Count());
         GetSolveFish();
+
+        string missionDesc = KTMissionGetter.Mission.Description;
+        if (missionDesc != null)
+        {
+            Regex regex = new Regex(@"\[Fishing\] Overfishing");
+            var match = regex.Match(missionDesc);
+            if (match.Success)
+                HandleOverfishing();
+        }
     }
 
 
@@ -70,7 +79,7 @@ public class fishingScript : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetKeyDown(space))
+        if (Input.GetKeyDown(space) && focused)
         {
             HandleOverfishing();
         }
@@ -232,7 +241,7 @@ public class fishingScript : MonoBehaviour
 
     void HandleOverfishing()
     {
-        if (focused && !overfishing)
+        if (!overfishing)
         {
             overfishing = true;
             audio.PlaySoundAtTransform("brain bell", transform);
