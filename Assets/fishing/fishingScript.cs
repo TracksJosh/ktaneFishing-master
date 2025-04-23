@@ -245,7 +245,6 @@ public class fishingScript : MonoBehaviour
         {
             overfishing = true;
             audio.PlaySoundAtTransform("brain bell", transform);
-            FishGoal = 999999;
             Background.material = redWater;
         }
     }
@@ -316,7 +315,16 @@ public class fishingScript : MonoBehaviour
             if (showReel)
                 Reel.OnInteract();
             while (!castThrow) { yield return true; }
-            Keep.OnInteract();
+            if (overfishing)
+            {
+                if ((arrayFish >= 18 && arrayFish <= 45) || (arrayFish >= 92 && arrayFish <= 99)) Throw.OnInteract();
+                else Keep.OnInteract();
+            }
+            else
+            {
+                Keep.OnInteract();
+            }
+            
             yield return new WaitForSeconds(0.1f);
             if (isSolved)
                 break;
